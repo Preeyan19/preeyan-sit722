@@ -1,0 +1,38 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches: [ "testing" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/customer_service/requirements.txt
+          pip install -r backend/order_service/requirements.txt
+          pip install -r backend/product_service/requirements.txt
+          pip install pytest
+
+      - name: Run backend tests
+        run: |
+          pytest backend/customer_service/tests/
+          pytest backend/order_service/tests/
+          pytest backend/product_service/tests/
+
+      - name: Build Docker images
+        run: |
+          docker build -t customer_service backend/customer_service
+          docker build -t order_service backend/order_service
+          docker build -t product_service backend/product_service
+          docker build -t frontend frontend

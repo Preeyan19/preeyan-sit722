@@ -1,0 +1,28 @@
+name: Staging Deployment
+
+on:
+  workflow_run:
+    workflows: ["CI - Build and Test"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start staging environment
+        run: |
+          docker-compose -f docker-compose.yml up -d
+          sleep 60  # wait for services to start
+
+      - name: Run simple acceptance test
+        run: |
+          curl -f http://localhost:80 || exit 1
+
+      - name: Destroy staging environment
+        run: docker-compose -f docker-compose.yml down
